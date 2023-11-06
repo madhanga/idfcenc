@@ -6,18 +6,36 @@ import java.util.Random;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
  
 public class Main {
     public static void main(String[] args) throws Exception {
-        var encryptedFromGo = "aVRxW1pDL2V7en5idnZzZMsccCua4ZYQ4ZZpbWetlVGk9y0IahiwQJJJoCeve0u305sEgP9KE5rEEfwf5Upm1B6RSriDGQk7uSznOCYFkv3BYRCeGvZ2c1u+q5/mhTAw";
+        var data = "aVRxW1pDL2V7en5idnZzZMsccCua4ZYQ4ZZpbWetlVGk9y0IahiwQJJJoCeve0u305sEgP9KE5rEEfwf5Upm1B6RSriDGQk7uSznOCYFkv3BYRCeGvZ2c1u+q5/mhTAw";
+        String kind = "encrypted";
+
         if (args.length > 0) {
-            encryptedFromGo = args[0];
+            kind = args[0];
+            if ((!"encrypted".equals(kind) && !"plain".equals(kind)) || args.length != 2) {
+                System.out.println("java Main.java <plain|encrypted> <content>");
+                return;
+            }
+            data = args[1].trim();
         }
 
-        final var keyStr = "0123456789abcdef";
-        final var key = HexFormat.of().formatHex(keyStr.getBytes());
-        final var decrypted = decrypt(encryptedFromGo, key);
-        System.out.println(decrypted);
+        //final var keyStr = "0123456789abcdef0123456789abcdef";
+        final var keyStr = "73646664666632337666333231326673";
+        if ("plain".equals(kind)) {
+            var encrypted = encrypt(data, keyStr);
+            var decrypted = decrypt(encrypted, keyStr);
+            System.out.printf("Encrypted: %s\nDecrypted: %s\n", encrypted, decrypted);
+            return;
+        }
+
+        if ("encrypted".equals(kind)) {
+            final var decrypted = decrypt(data, keyStr);
+            //final var decrypted = decode(data, keyStr.getBytes("UTF-8"));
+            System.out.printf("Decrypted: %s\n", decrypted);
+        }
     }
 
 
@@ -36,11 +54,12 @@ public class Main {
         return ivBuffer.toString();
     }
 
-    public static String encrypt(String data, String key) throws Exception {
-        final var keyInHexBytes = HexFormat.of().parseHex(key);
+    public static String encrypt(String data, String keyStr) throws Exception {
+        //final var keyInHexBytes = HexFormat.of().parseHex(key);
+        final var key = keyStr.getBytes("UTF-8");
         final var initVector = generateIv();
         final var ivSpec = new IvParameterSpec(initVector.getBytes("UTF-8"));
-        final var keySpec = new SecretKeySpec(keyInHexBytes, "AES");
+        final var keySpec = new SecretKeySpec(key, "AES");
         final var ciper = Cipher.getInstance("AES/CBC/PKCS5PADDING");
         ciper.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
 
@@ -54,9 +73,10 @@ public class Main {
         return encrypted;
     }
 
-    public static String decrypt(String encrypted, String key) throws Exception {
-        final var keyInHeBytes = HexFormat.of().parseHex(key);
-        final var keySpec = new SecretKeySpec(keyInHeBytes, "AES");
+    public static String decrypt(String encrypted, String keyStr) throws Exception {
+        //final var keyInHeBytes = HexFormat.of().parseHex(key);
+        final var key = keyStr.getBytes("UTF-8");
+        final var keySpec = new SecretKeySpec(key, "AES");
 
         final var encryptedBytes = Base64.getDecoder().decode(encrypted);
         final var initVector = Arrays.copyOfRange(encryptedBytes, 0, 16);
@@ -71,5 +91,17 @@ public class Main {
 
         return decrypted;
     }
+
+    /*public static String decode(String base64Text, byte[] key) throws Exception {
+        byte[] inputArr = Base64.getDecoder().decode(base64Text);
+        SecretKeySpec skSpec = new SecretKeySpec(key, "AES");
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+        int blockSize = cipher.getBlockSize();
+        IvParameterSpec iv = new IvParameterSpec(Arrays.copyOf(inputArr, blockSize));
+        byte[] dataToDecrypt = Arrays.copyOfRange(inputArr, blockSize, inputArr.length);
+        cipher.init(Cipher.DECRYPT_MODE, skSpec, iv);
+        byte[] result = cipher.doFinal(dataToDecrypt);
+        return new String(result, StandardCharsets.UTF_8);
+    }*/
 }
 

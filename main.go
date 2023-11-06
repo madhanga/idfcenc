@@ -11,48 +11,63 @@ import (
 )
 
 func main() {
-	key := "0123456789abcdef"
+	//key := "0123456789abcdef0123456789abcdef"
+	key := "73646664666632337666333231326673"
+	kind := "plain"
 	data := `this is test payload with special characters - வணக்கம்`
 	if len(os.Args) > 1 {
-		data = os.Args[1]
+		kind = os.Args[1]
+		if (kind != "plain" && kind != "encrypted") || len(os.Args) != 3 {
+			fmt.Println("go run main.go [plain | encrypted] <content>")
+			return
+		}
+		data = os.Args[2]
 	}
 
-	encrypted := encrypt(data, []byte(key))
-	fmt.Printf("Encrypted: %v\n", encrypted)
+	if kind == "plain" {
+		encrypted := encrypt(data, []byte(key))
+		fmt.Printf("Encrypted: %v\n", encrypted)
 
-	decrypted := decrypt(encrypted, []byte(key))
-	fmt.Printf("Decrypted: %v\n", decrypted)
+		decrypted := decrypt(encrypted, []byte(key))
+		fmt.Printf("Decrypted: %v\n", decrypted)
+		return
+	}
+
+	if kind == "encrypted" {
+		decrypted := decrypt(data, []byte(key))
+		fmt.Printf("Decrypted: %v\n", decrypted)
+		return
+	}
 }
 
-func generateIV() string {
+func generateIV() []byte {
 	ivLength := 16
 	lowAsciiLimit := 47
 	highAsciiLimit := 126
 
-	finalIvBuffer := make([]byte, ivLength)
+	ivBuffer := make([]byte, ivLength)
 	for i := 0; i < ivLength; i++ {
 		randomNumber := lowAsciiLimit + rand.Intn(highAsciiLimit-lowAsciiLimit+1)
-		finalIvBuffer[i] = byte(randomNumber)
+		ivBuffer[i] = byte(randomNumber)
 	}
-	return string(finalIvBuffer)
+	return ivBuffer
 }
 
-func encrypt(src string, key []byte) string {
+func encrypt(data string, key []byte) string {
 	initialVector := generateIV()
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
 	}
-	content := []byte(src)
+	content := []byte(data)
 	content = pkcs5Padding(content, block.BlockSize())
 	crypted := make([]byte, len(content))
-	ecb := cipher.NewCBCEncrypter(block, []byte(initialVector))
+	ecb := cipher.NewCBCEncrypter(block, initialVector)
 	ecb.CryptBlocks(crypted, content)
 
-	initialVectorBytes := []byte(initialVector)
-	finalArray := make([]byte, len(initialVectorBytes) + len(crypted))
-	copy(finalArray[:len(initialVectorBytes)], initialVectorBytes)
-	copy(finalArray[len(initialVectorBytes):], crypted)
+	finalArray := make([]byte, len(initialVector)+len(crypted))
+	copy(finalArray[:len(initialVector)], initialVector)
+	copy(finalArray[len(initialVector):], crypted)
 
 	return base64.StdEncoding.EncodeToString(finalArray)
 }
@@ -82,6 +97,8 @@ func decrypt(encryptedBase64 string, key []byte) string {
 	ecb.CryptBlocks(decrypted, content)
 
 	return string(pkcs5Trimming(decrypted))
+	//return string(decrypted)
+
 }
 func pkcs5Trimming(encrypt []byte) []byte {
 	padding := encrypt[len(encrypt)-1]
