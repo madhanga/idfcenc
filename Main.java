@@ -1,56 +1,41 @@
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.HexFormat;
 import java.util.Random;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
  
 public class Main {
     public static void main(String[] args) throws Exception {
-        var data = "aVRxW1pDL2V7en5idnZzZMsccCua4ZYQ4ZZpbWetlVGk9y0IahiwQJJJoCeve0u305sEgP9KE5rEEfwf5Upm1B6RSriDGQk7uSznOCYFkv3BYRCeGvZ2c1u+q5/mhTAw";
-        String kind = "encrypted";
-
-        if (args.length > 0) {
-            kind = args[0];
-            if ((!"encrypted".equals(kind) && !"plain".equals(kind)) || args.length != 2) {
-                System.out.println("java Main.java <plain|encrypted> <content>");
-                return;
-            }
-            data = args[1].trim();
-        }
-
         final var keyStr = "0123456789abcdef0123456789abcdef";
-        if ("plain".equals(kind)) {
-            var encrypted = encrypt(data, keyStr);
-            var decrypted = decrypt(encrypted, keyStr);
-            System.out.printf("Encrypted: %s\nDecrypted: %s\n", encrypted, decrypted);
+
+        if (args.length == 0) {
+            final var plain = "Hello";
+            final var encrypted = encrypt(plain, keyStr);
+            final var decryted = decrypt(encrypted, keyStr);
+            System.out.printf("Plain: %s\nEncrypted: %s\nDecrypted: %s\n", plain, encrypted, decryted);
             return;
         }
 
-        if ("encrypted".equals(kind)) {
-            final var decrypted = decrypt(data, keyStr);
-            //final var decrypted = decode(data, keyStr.getBytes("UTF-8"));
-            System.out.printf("Decrypted: %s\n", decrypted);
+        if (args.length != 2) {
+            System.out.println("java Main.java <encrypt | decrypt> \"content\"");
+            return;
         }
-    }
 
+        final var kind = args[0];
 
-    public static String generateIv() {
-        final int lowAsciiLimit = 47; // '/'
-        final int highAsciiLimit = 126; // 'z'
-        
-        final int ivLength = 16;
-        final var random = new Random();
-        final var ivBuffer = new StringBuilder(ivLength);
-        
-        for (int i=0; i<ivLength; i++) {
-            final int randomNumber = lowAsciiLimit + (int) (random.nextFloat() * (highAsciiLimit - lowAsciiLimit));
-            ivBuffer.append((char) randomNumber);
+        if ("encrypt".equals(kind)) {
+            System.out.println(encrypt(args[1], keyStr));
+            return;
         }
-        return ivBuffer.toString();
+
+        if ("decrypt".equals(kind)) {
+            System.out.println(decrypt(args[1], keyStr));
+            return;
+        }
+
+        System.out.println("java Main.java <encrypt | decrypt> \"content\"");
     }
 
     public static String encrypt(String data, String keyStr) throws Exception {
@@ -89,6 +74,21 @@ public class Main {
         final var decrypted = new String(decryptedBytes);
 
         return decrypted;
+    }
+    
+    public static String generateIv() {
+        final int lowAsciiLimit = 47; // '/'
+        final int highAsciiLimit = 126; // 'z'
+        
+        final int ivLength = 16;
+        final var random = new Random();
+        final var ivBuffer = new StringBuilder(ivLength);
+        
+        for (int i=0; i<ivLength; i++) {
+            final int randomNumber = lowAsciiLimit + (int) (random.nextFloat() * (highAsciiLimit - lowAsciiLimit));
+            ivBuffer.append((char) randomNumber);
+        }
+        return ivBuffer.toString();
     }
 
     /*public static String decode(String base64Text, byte[] key) throws Exception {

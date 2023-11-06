@@ -3,24 +3,30 @@
 ## Prerequisite
 - Go 1.2
 - Java 21.0.1 
+- node 20.7.0
 
-## Run in go
-Run in go which will give a encypted data for the given data in argument.
+## Run using following commands
+### Go
 ```
-go run main.go "hello this is a sample data. வணக்கம்"
-```
-
-Output:
-```
-Encrypted: NXFcXVNsTn0xTDlAfTRXWH+PX/u1mmK910mpbXgNWjCwOuaw244vkv6mPGEyv+bmzmrvwVgXaFnPRa76+b6Y2zhkh0pApEBnzYr3rzYvlsM=
-Decrypted: hello this is a sample data. வணக்கம்
+go run main.go encrypt "hello"
+go run main.go decrypt "encrypted text"
 ```
 
-## Run in Java
-Take the encypted value emitted from Go program above and pass teh same to java
+### Java
 ```
-java Main.java "NXFcXVNsTn0xTDlAfTRXWH+PX/u1mmK910mpbXgNWjCwOuaw244vkv6mPGEyv+bmzmrvwVgXaFnPRa76+b6Y2zhkh0pApEBnzYr3rzYvlsM="
+java Main.java encrypt "hello"
+java Main.java decrypt "encrypted text"
 ```
 
-The output will the plain text you originally passed it to Go.
+### node.js
+```
+node main.js encrypt "hello"
+node.main.js decrypt "encrypted text"
+```
 
+## Across languages
+You can encrypt in any language and decrypt in another. eg
+```
+go run main.go encrypt "hello"
+java Main.java decrypt "encrypted text"
+```

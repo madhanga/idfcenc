@@ -11,49 +11,38 @@ import (
 )
 
 func main() {
-	key := "0123456789abcdef0123456789abcdef"
-	//key := "73646664666632337666333231326673"
-	kind := "plain"
-	data := `this is test payload with special characters - வணக்கம்`
-	if len(os.Args) > 1 {
-		kind = os.Args[1]
-		if (kind != "plain" && kind != "encrypted") || len(os.Args) != 3 {
-			fmt.Println("go run main.go [plain | encrypted] <content>")
-			return
-		}
-		data = os.Args[2]
-	}
+	keyStr := "0123456789abcdef0123456789abcdef"
 
-	if kind == "plain" {
-		encrypted := encrypt(data, []byte(key))
-		fmt.Printf("Encrypted: %v\n", encrypted)
-
-		decrypted := decrypt(encrypted, []byte(key))
-		fmt.Printf("Decrypted: %v\n", decrypted)
+	if len(os.Args) == 1 {
+		plain := "hello"
+		encrypted := encrypt(plain, keyStr)
+		decrypted := decrypt(encrypted, keyStr)
+		fmt.Printf("Plain: %s\nEncrypted: %s\nDecrypted: %s\n", plain, encrypted, decrypted)
 		return
 	}
 
-	if kind == "encrypted" {
-		decrypted := decrypt(data, []byte(key))
-		fmt.Printf("Decrypted: %v\n", decrypted)
+	if len(os.Args) != 3 {
+		fmt.Println(`go run main.go <encrypt | decrypt> "<content>"`)
+		return	
+	}
+
+	kind := os.Args[1]
+	if kind == "encrypt" {
+		fmt.Println(encrypt(os.Args[2], keyStr))
 		return
 	}
-}
 
-func generateIV() []byte {
-	ivLength := 16
-	lowAsciiLimit := 47
-	highAsciiLimit := 126
-
-	ivBuffer := make([]byte, ivLength)
-	for i := 0; i < ivLength; i++ {
-		randomNumber := lowAsciiLimit + rand.Intn(highAsciiLimit-lowAsciiLimit+1)
-		ivBuffer[i] = byte(randomNumber)
+	if kind == "decrypt" {
+		fmt.Println(decrypt(os.Args[2], keyStr))
+		return
 	}
-	return ivBuffer
+	
+	fmt.Println(`go run main.go <encrypt | decrypt> "<content>"`)
 }
 
-func encrypt(data string, key []byte) string {
+
+func encrypt(data string, keyStr string) string {
+	key := []byte(keyStr)
 	initialVector := generateIV()
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -72,13 +61,8 @@ func encrypt(data string, key []byte) string {
 	return base64.StdEncoding.EncodeToString(finalArray)
 }
 
-func pkcs5Padding(ciphertext []byte, blockSize int) []byte {
-	padding := blockSize - len(ciphertext)%blockSize
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(ciphertext, padtext...)
-}
-
-func decrypt(encryptedBase64 string, key []byte) string {
+func decrypt(encryptedBase64 string, keyStr string) string {
+	key := []byte(keyStr)
 	encrypted, err := base64.StdEncoding.DecodeString(encryptedBase64)
 	if err != nil {
 		panic(err)
@@ -97,9 +81,27 @@ func decrypt(encryptedBase64 string, key []byte) string {
 	ecb.CryptBlocks(decrypted, content)
 
 	return string(pkcs5Trimming(decrypted))
-	//return string(decrypted)
-
 }
+
+func generateIV() []byte {
+	ivLength := 16
+	lowAsciiLimit := 47
+	highAsciiLimit := 126
+
+	ivBuffer := make([]byte, ivLength)
+	for i := 0; i < ivLength; i++ {
+		randomNumber := lowAsciiLimit + rand.Intn(highAsciiLimit-lowAsciiLimit+1)
+		ivBuffer[i] = byte(randomNumber)
+	}
+	return ivBuffer
+}
+
+func pkcs5Padding(ciphertext []byte, blockSize int) []byte {
+	padding := blockSize - len(ciphertext)%blockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(ciphertext, padtext...)
+}
+
 func pkcs5Trimming(encrypt []byte) []byte {
 	padding := encrypt[len(encrypt)-1]
 	return encrypt[:len(encrypt)-int(padding)]
