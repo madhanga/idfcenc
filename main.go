@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	//key := "0123456789abcdef0123456789abcdef"
-	key := "73646664666632337666333231326673"
+	key := "0123456789abcdef0123456789abcdef"
+	//key := "73646664666632337666333231326673"
 	kind := "plain"
 	data := `this is test payload with special characters - வணக்கம்`
 	if len(os.Args) > 1 {
@@ -83,7 +83,7 @@ func decrypt(encryptedBase64 string, key []byte) string {
 	if err != nil {
 		panic(err)
 	}
-
+	
 	keySpec, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)

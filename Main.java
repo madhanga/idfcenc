@@ -22,8 +22,7 @@ public class Main {
             data = args[1].trim();
         }
 
-        //final var keyStr = "0123456789abcdef0123456789abcdef";
-        final var keyStr = "73646664666632337666333231326673";
+        final var keyStr = "0123456789abcdef0123456789abcdef";
         if ("plain".equals(kind)) {
             var encrypted = encrypt(data, keyStr);
             var decrypted = decrypt(encrypted, keyStr);
@@ -74,7 +73,7 @@ public class Main {
     }
 
     public static String decrypt(String encrypted, String keyStr) throws Exception {
-        //final var keyInHeBytes = HexFormat.of().parseHex(key);
+        //final var key = HexFormat.of().parseHex(keyStr);
         final var key = keyStr.getBytes("UTF-8");
         final var keySpec = new SecretKeySpec(key, "AES");
 
